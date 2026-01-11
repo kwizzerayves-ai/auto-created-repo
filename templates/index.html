@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>F3 System API Servisleri</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background: #000000;
+            color: white;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* GIF Arka Plan - DÜZELTİLMİŞ */
+        .background-gif {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -1;
+            overflow: hidden;
+            background: #000;
+        }
+
+        .background-gif iframe {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            border: none;
+            pointer-events: none;
+        }
+
+        /* Overlay */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: -1;
+        }
+
+        /* Yükleme ekranı */
+        #loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #000000;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-content {
+            text-align: center;
+            padding: 40px;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 20px;
+            border: 3px solid #ff0033;
+            box-shadow: 0 0 40px rgba(255, 0, 51, 0.6);
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .loader-logo {
+            font-size: 3.5rem;
+            margin-bottom: 25px;
+            color: #ff0033;
+            text-shadow: 0 0 20px #ff0033;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { 
+                transform: scale(1); 
+                text-shadow: 0 0 20px #ff0033;
+            }
+            50% { 
+                transform: scale(1.05); 
+                text-shadow: 0 0 30px #ff0033, 0 0 40px #ff0033;
+            }
+            100% { 
+                transform: scale(1); 
+                text-shadow: 0 0 20px #ff0033;
+            }
+        }
+
+        .loader-text {
+            font-size: 1.3rem;
+            margin-bottom: 35px;
+            color: #ffffff;
+            line-height: 1.6;
+            padding: 0 10px;
+        }
+
+        .start-btn {
+            background: linear-gradient(45deg, #ff0033, #ff3366);
+            border: none;
+            border-radius: 50px;
+            padding: 16px 45px;
+            color: white;
+            font-size: 1.3rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 25px rgba(255, 0, 51, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            width: 100%;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        .start-btn:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(255, 0, 51, 0.8);
+            background: linear-gradient(45deg, #ff0033, #ff5588);
+        }
+
+        .start-btn:active {
+            transform: translateY(0);
+        }
+
+        /* Ana içerik */
+        #main-content {
+            position: relative;
+            z-index: 2;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            padding: 20px;
+            max-width: 1600px;
+            margin: 0 auto;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 50px 20px 30px;
+            margin-bottom: 40px;
+        }
+
+        .header-title {
+            font-size: 3.2rem;
+            margin-bottom: 20px;
+            color: #ff0033;
+            text-shadow: 0 0 25px #ff0033;
+            letter-spacing: 1px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 25px 40px;
+            border-radius: 15px;
+            border: 3px solid #ff0033;
+            display: inline-block;
+        }
+
+        .header-subtitle {
+            font-size: 1.3rem;
+            color: #ffffff;
+            max-width: 900px;
+            margin: 25px auto;
+            line-height: 1.7;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 0, 51, 0.4);
+        }
+
+        /* API grid */
+        .api-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+            gap: 25px;
+            margin-bottom: 60px;
+        }
+
+        /* API kartı */
+        .api-card {
+            background: rgba(15, 15, 15, 0.92);
+            border-radius: 12px;
+            padding: 25px;
+            border: 2px solid rgba(255, 0, 51, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+        }
+
+        .api-card:hover {
+            transform: translateY(-5px);
+            border-color: #ff0033;
+            box-shadow: 0 12px 30px rgba(255, 0, 51, 0.5);
+        }
+
+        .api-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, #ff0033, #ff3366);
+        }
+
+        .api-title {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #ff3366;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .api-title i {
+            font-size: 1.2rem;
+            color: #ff0033;
+        }
+
+        .api-description {
+            color: #cccccc;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-size: 1rem;
+            min-height: 60px;
+        }
+
+        .api-buttons {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .copy-btn, .visit-btn {
+            flex: 1;
+            padding: 13px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        .copy-btn {
+            background: rgba(255, 0, 51, 0.2);
+            color: #ff3366;
+            border: 2px solid rgba(255, 0, 51, 0.4);
+        }
+
+        .copy-btn:hover {
+            background: rgba(255, 0, 51, 0.4);
+            transform: scale(1.05);
+        }
+
+        .visit-btn {
+            background: rgba(255, 51, 102, 0.2);
+            color: #ff5588;
+            border: 2px solid rgba(255, 51, 102, 0.4);
+        }
+
+        .visit-btn:hover {
+            background: rgba(255, 51, 102, 0.4);
+            transform: scale(1.05);
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 35px;
+            margin-top: 50px;
+            border-top: 2px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            font-size: 1rem;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 0, 51, 0.3);
+        }
+
+        /* Müzik kontrolü */
+        .music-control {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            z-index: 100;
+            background: rgba(20, 20, 20, 0.95);
+            border-radius: 50px;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            border: 2px solid rgba(255, 0, 51, 0.4);
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.6);
+        }
+
+        .music-btn {
+            background: none;
+            border: none;
+            color: #ff3366;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .music-btn:hover {
+            background: rgba(255, 0, 51, 0.2);
+            transform: scale(1.1);
+        }
+
+        .music-text {
+            font-size: 0.95rem;
+            color: #ffffff;
+            font-weight: 500;
+            margin: 0 5px;
+        }
+
+        /* API sayacı */
+        .api-counter {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.85);
+            border-radius: 15px;
+            border: 2px solid rgba(255, 0, 51, 0.4);
+        }
+
+        .counter-number {
+            font-size: 3rem;
+            color: #ff0033;
+            font-weight: bold;
+            text-shadow: 0 0 15px #ff0033;
+            margin-bottom: 10px;
+        }
+
+        .counter-text {
+            font-size: 1.2rem;
+            color: #ffffff;
+        }
+
+        /* Responsive */
+        @media (max-width: 1400px) {
+            .api-grid {
+                grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .api-grid {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            }
+            
+            .header-title {
+                font-size: 2.8rem;
+                padding: 20px 30px;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .api-grid {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+            }
+            
+            .header-title {
+                font-size: 2.4rem;
+                padding: 20px;
+            }
+            
+            .header-subtitle {
+                font-size: 1.1rem;
+                padding: 15px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .api-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+            }
+            
+            .header-title {
+                font-size: 2rem;
+                padding: 18px;
+            }
+            
+            .loader-logo {
+                font-size: 2.8rem;
+            }
+            
+            .loader-content {
+                padding: 30px 20px;
+            }
+            
+            .music-control {
+                bottom: 15px;
+                right: 15px;
+                left: 15px;
+                justify-content: center;
+                padding: 10px 15px;
+            }
+            
+            .start-btn {
+                padding: 14px 35px;
+                font-size: 1.2rem;
+                max-width: 250px;
+            }
+            
+            .api-card {
+                padding: 22px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header-title {
+                font-size: 1.6rem;
+                padding: 15px;
+            }
+            
+            .api-card {
+                padding: 18px;
+            }
+            
+            .api-buttons {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .copy-btn, .visit-btn {
+                width: 100%;
+                padding: 12px;
+            }
+            
+            .music-control {
+                flex-wrap: wrap;
+                justify-content: center;
+                padding: 8px 12px;
+                border-radius: 25px;
+            }
+            
+            .counter-number {
+                font-size: 2.2rem;
+            }
+            
+            .loader-text {
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .header-title {
+                font-size: 1.4rem;
+            }
+            
+            .api-card {
+                padding: 15px;
+            }
+            
+            .api-title {
+                font-size: 1.2rem;
+            }
+            
+            .api-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- GIF Arka Plan - DÜZELTİLDİ -->
+    <div class="background-gif">
+        <!-- Tenor embed yerine direct gif kullanımı -->
+        <div style="width:100%;height:100%;position:absolute;top:0;left:0;">
+            <img src="https://media.tenor.com/5aOjngMn7QkAAAAC/dansedenemozi-dans-eden-kedi.gif" 
+                 style="width:100%;height:100%;object-fit:cover;"
+                 alt="Dans eden emoji GIF">
+        </div>
+    </div>
+    
+    <!-- Overlay -->
+    <div class="overlay"></div>
+    
+    <!-- Yükleme ekranı -->
+    <div id="loader">
+        <div class="loader-content">
+            <div class="loader-logo">
+                <i class="fas fa-server"></i> F3 SYSTEM
+            </div>
+            <div class="loader-text">
+                <p><strong>F3 System Premium API Servisleri</strong></p>
+                <p>28 adet premium API servisi ile hizmetinizdeyiz</p>
+            </div>
+            <button class="start-btn" id="startBtn">
+                <i class="fas fa-play-circle"></i> SİSTEMİ BAŞLAT
+            </button>
+        </div>
+    </div>
+    
+    <!-- Ana içerik -->
+    <div id="main-content">
+        <!-- Header -->
+        <header>
+            <h1 class="header-title">
+                <i class="fas fa-server"></i> F3 SYSTEM API SERVİSLERİ
+            </h1>
+            <p class="header-subtitle">
+                <i class="fas fa-shield-alt"></i> 28 adet premium API servisi ile güvenli ve hızlı veri sorgulama.
+                Tüm API'ler SSL şifreleme ile korunmaktadır.
+            </p>
+            
+            <!-- API sayacı -->
+            <div class="api-counter">
+                <div class="counter-number" id="apiCount">28</div>
+                <div class="counter-text">AKTİF API SERVİSİ</div>
+            </div>
+        </header>
+        
+        <!-- API Grid -->
+        <div class="api-grid" id="apiGrid">
+            <!-- API kartları buraya JavaScript ile eklenecek -->
+        </div>
+        
+        <!-- Footer -->
+        <footer>
+            <p><strong>© 2024 F3 System API Servisleri</strong> - Tüm hakları saklıdır.</p>
+            <p>Geliştirici: F3 System Teknoloji Ekibi</p>
+            <p style="margin-top: 15px; font-size: 0.9rem; color: #ff3366;">
+                <i class="fas fa-lock"></i> 256-bit SSL şifreleme | <i class="fas fa-bolt"></i> Yüksek performans
+            </p>
+        </footer>
+    </div>
+    
+    <!-- Müzik kontrolü -->
+    <div class="music-control">
+        <button class="music-btn" id="playBtn">
+            <i class="fas fa-play"></i>
+        </button>
+        <button class="music-btn" id="pauseBtn">
+            <i class="fas fa-pause"></i>
+        </button>
+        <span class="music-text">10numaraN.mp3</span>
+        <button class="music-btn" id="volumeUpBtn">
+            <i class="fas fa-volume-up"></i>
+        </button>
+        <button class="music-btn" id="volumeDownBtn">
+            <i class="fas fa-volume-down"></i>
+        </button>
+    </div>
+    
+    <!-- Audio element -->
+    <audio id="musicAudio" loop>
+        <source src="/10numaran.mp3" type="audio/mpeg">
+        Tarayıcınız audio elementini desteklemiyor.
+    </audio>
+
+    <script>
+        // API verileri - TÜM 28 API
+        const apiData = [
+            {
+                title: "Ad Soyad Sorgu",
+                icon: "fas fa-user",
+                description: "Ad ve soyad ile kişi bilgilerini sorgulama",
+                url: "http://45.81.113.22:4014/api/v1/adsoyad?ad=NABI&soyad=BABA"
+            },
+            {
+                title: "TC Adres Sorgu",
+                icon: "fas fa-home",
+                description: "TC kimlik numarası ile adres bilgilerini sorgulama",
+                url: "http://45.81.113.22:4014/api/v1/tc/adres?tc=12345678901"
+            },
+            {
+                title: "Aile Bilgileri",
+                icon: "fas fa-users",
+                description: "TC kimlik numarası ile aile bireylerini sorgulama",
+                url: "http://45.81.113.22:4014/api/v1/aile?tc=12345678901"
+            },
+            {
+                title: "GSM Sorgu",
+                icon: "fas fa-phone",
+                description: "Telefon numarası ile kişi bilgilerini sorgulama",
+                url: "http://45.81.113.22:4014/api/v1/gsm?q=05551234567"
+            },
+            {
+                title: "Baba Bilgisi",
+                icon: "fas fa-male",
+                description: "TC kimlik numarası ile baba bilgilerini sorgulama",
+                url: "http://45.81.113.22:4014/api/v1/baba?tc=12345678901"
+            },
+            {
+                title: "Anne Bilgisi",
+                icon: "fas fa-female",
+                description: "TC kimlik numarası ile anne bilgilerini sorgulama",
+                url: "http://45.81.113.22:4014/api/v1/anne?tc=12345678901"
+            },
+            {
+                title: "TC Pro Sorgu",
+                icon: "fas fa-id-card",
+                description: "TC kimlik numarası ile detaylı kişi bilgilerini sorgulama",
+                url: "http://45.81.113.22:4014/api/v1/tcpro?tc=12345678901"
+            },
+            {
+                title: "Vesika Sorgu",
+                icon: "fas fa-id-badge",
+                description: "TC kimlik numarası ile vesika bilgilerini sorgulama",
+                url: "http://45.81.113.22:5000/vesika/19007791262"
+            },
+            {
+                title: "Plaka Sorgu (TC)",
+                icon: "fas fa-car",
+                description: "TC ile plaka bilgilerini sorgulama",
+                url: "http://45.81.113.22:5004/plaka?tc=34ABC123"
+            },
+            {
+                title: "Plaka Sorgu (Ad Soyad)",
+                icon: "fas fa-car-alt",
+                description: "Ad soyad ile plaka bilgilerini sorgulama",
+                url: "http://45.81.113.22:5004/adsoyadplaka?ad=MEHMET&soyad=YILMAZ"
+            },
+            {
+                title: "Seri No Sorgu (No)",
+                icon: "fas fa-hashtag",
+                description: "Seri numarası ile kişi bilgilerini sorgulama",
+                url: "http://45.81.113.22:5008/serino?no=SERINO"
+            },
+            {
+                title: "Seri No Sorgu (Ad Soyad)",
+                icon: "fas fa-user-tag",
+                description: "Ad soyad ile seri numarası sorgulama",
+                url: "http://45.81.113.22:5008/adsoyad?ad=AD&soyad=SOYAD"
+            },
+            {
+                title: "Seri No Sorgu (TC)",
+                icon: "fas fa-id-card-alt",
+                description: "TC kimlik numarası ile seri numarası sorgulama",
+                url: "http://45.81.113.22:5008/tc?tc=TC_NUMARASI"
+            },
+            {
+                title: "SGK Sorgu (TC)",
+                icon: "fas fa-heartbeat",
+                description: "TC ile SGK bilgilerini sorgulama",
+                url: "http://127.0.0.1:5080/sgk?tc=10001336992"
+            },
+            {
+                title: "SGK Sorgu (Ad Soyad)",
+                icon: "fas fa-stethoscope",
+                description: "Ad soyad ile SGK bilgilerini sorgulama",
+                url: "http://127.0.0.1:5080/sgkadsoyad?ad=ELİF&soyad=ÖKSÜZ"
+            },
+            {
+                title: "Papara Sorgu (Ad)",
+                icon: "fas fa-money-bill-wave",
+                description: "Ad ile Papara bilgilerini sorgulama",
+                url: "http://45.81.113.22:5040/papara/ad?ad=MEHMET"
+            },
+            {
+                title: "Papara Sorgu (Ad Soyad)",
+                icon: "fas fa-credit-card",
+                description: "Ad soyad ile Papara bilgilerini sorgulama",
+                url: "http://45.81.113.22:5040/papara/adsoyad?ad=MEHMET&soyad=TEKER"
+            },
+            {
+                title: "Papara Sorgu (No)",
+                icon: "fas fa-wallet",
+                description: "Papara numarası ile bilgi sorgulama",
+                url: "http://45.81.113.22:5040/papara?no=1354693996"
+            },
+            {
+                title: "Üniversite Sorgu (Soyad)",
+                icon: "fas fa-graduation-cap",
+                description: "Soyad ile üniversite öğrenci bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?soyad=ARSLAN"
+            },
+            {
+                title: "Üniversite Sorgu (Ad Soyad)",
+                icon: "fas fa-user-graduate",
+                description: "Ad soyad ile üniversite bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?ad=ESMA&soyad=YILDIZ"
+            },
+            {
+                title: "Üniversite Sorgu (Üniversite)",
+                icon: "fas fa-university",
+                description: "Üniversite adı ile öğrenci bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?universite=SAKARYA"
+            },
+            {
+                title: "Üniversite Sorgu (Bölüm)",
+                icon: "fas fa-book",
+                description: "Bölüm adı ile öğrenci bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?bolum=İNGİLİZCE"
+            },
+            {
+                title: "Üniversite Sorgu (Üni + Bölüm)",
+                icon: "fas fa-school",
+                description: "Üniversite ve bölüm ile öğrenci bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?universite=ALANYA&bolum=İNGİLİZCE"
+            },
+            {
+                title: "Üniversite Sorgu (Ad + Üni)",
+                icon: "fas fa-user-graduate",
+                description: "Ad ve üniversite ile öğrenci bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?ad=ESMA&universite=KAHRAMANMARAŞ"
+            },
+            {
+                title: "Üniversite Sorgu (Ad Soyad Üni)",
+                icon: "fas fa-user-tie",
+                description: "Ad, soyad ve üniversite ile öğrenci bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?ad=GİZEM&soyad=ARSLAN&universite=SAKARYA"
+            },
+            {
+                title: "Üniversite Sorgu (Ad Soyad Bölüm)",
+                icon: "fas fa-book-reader",
+                description: "Ad, soyad ve bölüm ile öğrenci bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?ad=ESMA&soyad=ÇALLAK&bolum=İNGİLİZCE"
+            },
+            {
+                title: "Üniversite Sorgu (Üni + Bölüm + Ad)",
+                icon: "fas fa-chalkboard-teacher",
+                description: "Üniversite, bölüm ve ad ile detaylı öğrenci bilgilerini sorgulama",
+                url: "http://45.81.113.22:4000/uni?universite=SAKARYA&bolum=TIBBİ&ad=GİZEM"
+            }
+        ];
+
+        // DOM elementleri
+        const loader = document.getElementById('loader');
+        const mainContent = document.getElementById('main-content');
+        const startBtn = document.getElementById('startBtn');
+        const apiGrid = document.getElementById('apiGrid');
+        const apiCount = document.getElementById('apiCount');
+        const musicAudio = document.getElementById('musicAudio');
+        const playBtn = document.getElementById('playBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const volumeUpBtn = document.getElementById('volumeUpBtn');
+        const volumeDownBtn = document.getElementById('volumeDownBtn');
+
+        // Sayfa yüklendiğinde
+        document.addEventListener('DOMContentLoaded', function() {
+            // API sayacını güncelle
+            apiCount.textContent = apiData.length;
+            
+            // API kartlarını oluştur
+            renderApiCards();
+            
+            // GIF'in yüklenmesini bekle
+            setTimeout(() => {
+                if (startBtn.innerHTML.includes('Başlat')) {
+                    startBtn.disabled = false;
+                }
+            }, 1000);
+        });
+
+        // Başlat butonu tıklama
+        startBtn.addEventListener('click', function() {
+            if (startBtn.disabled) return;
+            
+            // Butonu devre dışı bırak
+            startBtn.disabled = true;
+            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> YÜKLENİYOR...';
+            
+            // 1.5 saniye bekle
+            setTimeout(() => {
+                // Yükleme ekranını kaldır
+                loader.style.opacity = '0';
+                
+                setTimeout(() => {
+                    loader.style.display = 'none';
+                    mainContent.style.opacity = '1';
+                    
+                    // Müziği başlat
+                    musicAudio.play().then(() => {
+                        console.log("F3 System müziği çalıyor");
+                    }).catch(error => {
+                        console.log("Müzik çalma hatası:", error);
+                    });
+                }, 500);
+            }, 1500);
+        });
+
+        // API kartlarını oluştur
+        function renderApiCards() {
+            apiData.forEach(api => {
+                const apiCard = document.createElement('div');
+                apiCard.className = 'api-card';
+                
+                // URL gizli, sadece butonlarda kullanılacak
+                apiCard.innerHTML = `
+                    <h3 class="api-title">
+                        <i class="${api.icon}"></i> ${api.title}
+                    </h3>
+                    <p class="api-description">${api.description}</p>
+                    <div class="api-buttons">
+                        <button class="copy-btn" data-url="${api.url}">
+                            <i class="fas fa-copy"></i> URL'yi Kopyala
+                        </button>
+                        <button class="visit-btn" data-url="${api.url}">
+                            <i class="fas fa-external-link-alt"></i> API'ye Git
+                        </button>
+                    </div>
+                `;
+                
+                apiGrid.appendChild(apiCard);
+            });
+            
+            // Kopyala butonlarına event listener ekle
+            document.querySelectorAll('.copy-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    navigator.clipboard.writeText(url).then(() => {
+                        const originalText = this.innerHTML;
+                        const originalColor = this.style.color;
+                        
+                        this.innerHTML = '<i class="fas fa-check"></i> KOPYALANDI!';
+                        this.style.color = '#00ff00';
+                        this.style.background = 'rgba(0, 255, 0, 0.1)';
+                        this.style.borderColor = '#00ff00';
+                        
+                        setTimeout(() => {
+                            this.innerHTML = originalText;
+                            this.style.color = originalColor;
+                            this.style.background = '';
+                            this.style.borderColor = '';
+                        }, 2000);
+                    }).catch(err => {
+                        console.error('Kopyalama hatası:', err);
+                        // Fallback
+                        const textArea = document.createElement('textarea');
+                        textArea.value = url;
+                        document.body.appendChild(textArea);
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+                        
+                        this.innerHTML = '<i class="fas fa-check"></i> KOPYALANDI!';
+                        setTimeout(() => {
+                            this.innerHTML = '<i class="fas fa-copy"></i> URL\'yi Kopyala';
+                        }, 2000);
+                    });
+                });
+            });
+            
+            // Git butonlarına event listener ekle
+            document.querySelectorAll('.visit-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    window.open(url, '_blank');
+                });
+            });
+        }
+
+        // Müzik kontrolleri
+        playBtn.addEventListener('click', function() {
+            musicAudio.play();
+        });
+        
+        pauseBtn.addEventListener('click', function() {
+            musicAudio.pause();
+        });
+        
+        volumeUpBtn.addEventListener('click', function() {
+            if(musicAudio.volume < 1) {
+                musicAudio.volume = Math.min(1, musicAudio.volume + 0.1);
+            }
+        });
+        
+        volumeDownBtn.addEventListener('click', function() {
+            if(musicAudio.volume > 0) {
+                musicAudio.volume = Math.max(0, musicAudio.volume - 0.1);
+            }
+        });
+
+        // Sayfa tamamen yüklendiğinde
+        window.addEventListener('load', function() {
+            startBtn.innerHTML = '<i class="fas fa-play-circle"></i> SİSTEMİ BAŞLAT';
+            startBtn.disabled = false;
+        });
+    </script>
+</body>
+</html>
